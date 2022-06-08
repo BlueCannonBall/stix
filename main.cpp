@@ -1,4 +1,5 @@
 #include "stix.hpp"
+#include <chrono>
 #include <iostream>
 
 void print_game(const stix::Game& game) {
@@ -68,16 +69,29 @@ int main() {
             move.to_player = stix::PLAYER_A;
         }
 
-        game.move(move);
-        print_game(game);
+        if (command != "forfeit" && command != "continue" && command != "pass") {
+            std::vector<stix::Move> possible_moves;
+            game.find_all_moves(std::back_inserter(possible_moves), stix::PLAYER_A);
+
+            if (std::find(possible_moves.begin(), possible_moves.end(), move) == possible_moves.end()) {
+                std::cout << "Invalid move" << std::endl;
+                continue;
+            } else {
+                game.move(move);
+                print_game(game);
+            }
+        }
+
+    forfeit_move:
         std::cout << "Computer's turn" << std::endl;
-        stix::Move computer_move = game.find_best_move(7);
+        stix::BestMove computer_move = game.find_best_move(std::chrono::seconds(2));
         game.move(computer_move);
         if (computer_move.from_player == computer_move.to_player) {
-            std::cout << "<< split " << (computer_move.from_hand == stix::HAND_L ? 'l' : 'r') << ' ' << (computer_move.to_hand == stix::HAND_L ? 'l' : 'r') << ' ' << +computer_move.amount << std::endl;
+            std::cout << "<< split " << (computer_move.from_hand == stix::HAND_L ? 'l' : 'r') << ' ' << (computer_move.to_hand == stix::HAND_L ? 'l' : 'r') << ' ' << +computer_move.amount;
         } else {
-            std::cout << "<< attack " << (computer_move.from_hand == stix::HAND_L ? 'l' : 'r') << ' ' << (computer_move.to_hand == stix::HAND_L ? 'l' : 'r') << std::endl;
+            std::cout << "<< attack " << (computer_move.from_hand == stix::HAND_L ? 'l' : 'r') << ' ' << (computer_move.to_hand == stix::HAND_L ? 'l' : 'r');
         }
+        std::cout << " # Found at " << computer_move.depth << " depth\n";
     }
 
     std::cout << "Game over!" << std::endl;

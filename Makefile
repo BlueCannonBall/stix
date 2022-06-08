@@ -1,9 +1,9 @@
 CXX = g++
-CXXFLAGS = -s -Ofast
+CXXFLAGS = -s -Ofast -pthread
 TARGET = stix
 PREFIX = /usr/local
 
-$(TARGET): main.cpp stix.hpp
+$(TARGET): main.cpp stix.hpp threadpool.hpp
 	$(CXX) $< $(CXXFLAGS) -o $@
 
 .PHONY: clean install
