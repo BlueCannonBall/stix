@@ -11,7 +11,7 @@ void print_game(const stix::Game& game) {
 int main() {
     stix::Game game(stix::PLAYER_B);
 
-    while ((game.game_state[stix::PLAYER_A][stix::HAND_R] + game.game_state[stix::PLAYER_A][stix::HAND_L] > 0) ||
+    while ((game.game_state[stix::PLAYER_A][stix::HAND_R] + game.game_state[stix::PLAYER_A][stix::HAND_L] > 0) &&
            (game.game_state[stix::PLAYER_B][stix::HAND_R] + game.game_state[stix::PLAYER_B][stix::HAND_L] > 0)) {
         print_game(game);
         std::cout << "Your turn" << std::endl;
