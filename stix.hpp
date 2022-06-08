@@ -160,28 +160,26 @@ namespace stix {
 
             // Splits
             Player new_player = game_state[player_id];
-            boost::container::static_vector<Player, 32> tested_positions;
 
             for (;;) {
                 new_player[HAND_L]--;
                 new_player[HAND_R]++;
                 if (new_player[HAND_L] >= 0 && new_player[HAND_R] < 5) {
-                    if (std::find(tested_positions.begin(), tested_positions.end(), new_player) == tested_positions.end() && new_player != game_state[player_id]) {
+                    if (new_player != game_state[player_id]) {
                         ret = Move(player_id, HAND_L, player_id, HAND_R, new_player[HAND_R] - game_state[player_id][HAND_R]);
-                        tested_positions.push_back(new_player);
                     }
                 } else {
                     break;
                 }
             }
 
+            new_player = game_state[player_id];
             for (;;) {
                 new_player[HAND_R]--;
                 new_player[HAND_L]++;
                 if (new_player[HAND_R] >= 0 && new_player[HAND_L] < 5) {
-                    if (std::find(tested_positions.begin(), tested_positions.end(), new_player) == tested_positions.end() && new_player != game_state[player_id]) {
+                    if (new_player != game_state[player_id]) {
                         ret = Move(player_id, HAND_R, player_id, HAND_L, new_player[HAND_L] - game_state[player_id][HAND_L]);
-                        tested_positions.push_back(new_player);
                     }
                 } else {
                     break;
@@ -214,7 +212,7 @@ namespace stix {
 
             if (depth == 0) {
                 int evaluation = evaluate(player_id);
-                memcpy(old_game_state, game_state, sizeof(GameState));
+                memcpy(game_state, old_game_state, sizeof(GameState));
                 return evaluation;
             }
 
@@ -257,7 +255,7 @@ namespace stix {
 
             if (depth == 0) {
                 int evaluation = evaluate(player_id);
-                memcpy(old_game_state, game_state, sizeof(GameState));
+                memcpy(game_state, old_game_state, sizeof(GameState));
                 return evaluation;
             }
 
