@@ -1,22 +1,21 @@
-#include <utility>
-#include <stdint.h>
-#include <vector>
-#include <iterator>
 #include <algorithm>
-#include <string.h>
-#include <stdlib.h>
+#include <iterator>
 #include <limits.h>
+#include <stdint.h>
+#include <string.h>
+#include <utility>
+#include <vector>
 
 namespace stix {
     typedef int8_t Hand;
 
-    enum PlayerID: int8_t {
+    enum PlayerID : int8_t {
         PLAYER_NONE = -1,
         PLAYER_A = 0,
         PLAYER_B = 1
     };
 
-    enum HandID: uint8_t {
+    enum HandID : uint8_t {
         HAND_L = 0,
         HAND_R = 1
     };
@@ -24,7 +23,7 @@ namespace stix {
     inline PlayerID opposite_player(PlayerID player_id) {
         return (PlayerID) !((int8_t) player_id);
     }
-    
+
     class Player {
     public:
         Hand hands[2];
@@ -45,12 +44,12 @@ namespace stix {
             return hands[hand];
         }
 
-        bool operator==(Player player) {
+        bool operator==(Player player) const {
             return ((this->hands[HAND_L] == player.hands[HAND_L]) && (this->hands[HAND_R] == player.hands[HAND_R])) ||
-                ((this->hands[HAND_L] == player.hands[HAND_R]) && (this->hands[HAND_R] == player.hands[HAND_L]));
+                   ((this->hands[HAND_L] == player.hands[HAND_R]) && (this->hands[HAND_R] == player.hands[HAND_L]));
         }
 
-        inline bool operator!=(Player player) {
+        inline bool operator!=(Player player) const {
             return !(*this == player);
         }
     };
@@ -67,16 +66,28 @@ namespace stix {
 
         Move() = default;
         Move(PlayerID from_player, HandID from_hand, PlayerID to_player, HandID to_hand) :
-            from_player(from_player), from_hand(from_hand), to_player(to_player), to_hand(to_hand) {}
+            from_player(from_player),
+            from_hand(from_hand),
+            to_player(to_player),
+            to_hand(to_hand) { }
         Move(PlayerID from_player, uint8_t from_hand, PlayerID to_player, uint8_t to_hand) :
-            from_player(from_player), from_hand((HandID) from_hand), to_player(to_player), to_hand((HandID) to_hand) {}
-        
+            from_player(from_player),
+            from_hand((HandID) from_hand),
+            to_player(to_player),
+            to_hand((HandID) to_hand) { }
+
         Move(PlayerID from_player, HandID from_hand, PlayerID to_player, HandID to_hand, uint8_t amount) :
-            from_player(from_player), from_hand(from_hand), to_player(to_player), to_hand(to_hand), amount(amount) {}
+            from_player(from_player),
+            from_hand(from_hand),
+            to_player(to_player),
+            to_hand(to_hand),
+            amount(amount) { }
         Move(PlayerID from_player, uint8_t from_hand, PlayerID to_player, uint8_t to_hand, uint8_t amount) :
-            from_player(from_player), from_hand((HandID) from_hand), to_player(to_player), to_hand((HandID) to_hand), amount(amount) {}
-        
-        bool 
+            from_player(from_player),
+            from_hand((HandID) from_hand),
+            to_player(to_player),
+            to_hand((HandID) to_hand),
+            amount(amount) { }
     };
 
     typedef Player GameState[2];
@@ -87,10 +98,15 @@ namespace stix {
         PlayerID player_id;
 
         Game(PlayerID player_id) :
-            player_id(player_id) {}
-        
+            player_id(player_id) { }
+
         void move(Move move) {
-            game_state[move.to_player][move.to_hand] = 5 % (game_state[move.to_player][move.to_hand] + game_state[move.from_player][move.from_hand]);
+            if (move.from_player != move.to_player) {
+                game_state[move.to_player][move.to_hand] = (game_state[move.to_player][move.to_hand] + game_state[move.from_player][move.from_hand]) % 5;
+            } else {
+                game_state[move.to_player][move.to_hand] += move.amount;
+                game_state[move.from_player][move.from_hand] -= move.amount;
+            }
         }
 
         int evaluate(PlayerID player_id = PLAYER_NONE) {
@@ -126,15 +142,15 @@ namespace stix {
 
             // Splits
             Player new_player = game_state[player_id];
-            std::vector<Move> tested_moves;
+            std::vector<Player> tested_positions;
 
             for (;;) {
                 new_player[HAND_L]--;
                 new_player[HAND_R]++;
                 if (new_player[HAND_L] >= 0 && new_player[HAND_R] < 5) {
-                    Move move = Move(player_id, HAND_L, player_id, HAND_R,  new_player[HAND_R] - game_state[player_id][HAND_R]);
-                    if (std::find(tested_moves.begin(), tested_moves.end(), move) == tested_moves.end()) {
-                        tested_moves.push_back(move);
+                    if (std::find(tested_positions.begin(), tested_positions.end(), new_player) == tested_positions.end()) {
+                        ret = Move(player_id, HAND_L, player_id, HAND_R, new_player[HAND_R] - game_state[player_id][HAND_R]);
+                        tested_positions.push_back(new_player);
                     }
                 } else {
                     break;
@@ -145,21 +161,17 @@ namespace stix {
                 new_player[HAND_R]--;
                 new_player[HAND_L]++;
                 if (new_player[HAND_R] >= 0 && new_player[HAND_L] < 5) {
-                    Move move = Move(player_id, HAND_R, player_id, HAND_L, new_player[HAND_L] - game_state[player_id][HAND_L]);
-                    if (std::find(tested_moves.begin(), tested_moves.end(), move) == tested_moves.end()) {
-                        tested_moves.push_back(move);
+                    if (std::find(tested_positions.begin(), tested_positions.end(), new_player) == tested_positions.end()) {
+                        ret = Move(player_id, HAND_R, player_id, HAND_L, new_player[HAND_L] - game_state[player_id][HAND_L]);
+                        tested_positions.push_back(new_player);
                     }
                 } else {
                     break;
                 }
             }
-
-            for (Move move : tested_moves) {
-                ret = move;
-            }
         }
 
-        int mini(Move move, unsigned int depth, PlayerID player_id = PLAYER_NONE) {
+        int mini(Move move, int alpha, int beta, unsigned int depth, PlayerID player_id = PLAYER_NONE) {
             if (player_id == PLAYER_NONE) {
                 player_id = this->player_id;
             }
@@ -167,17 +179,24 @@ namespace stix {
             GameState old_game_state;
             memcpy(old_game_state, game_state, sizeof(GameState));
             this->move(move);
-            
+
             if (depth == 0) {
-                return evaluate(player_id);
+                int ret = evaluate(player_id);
+                memcpy(old_game_state, game_state, sizeof(GameState));
+                return ret;
             }
 
             std::vector<Move> moves;
             find_all_moves(std::back_inserter(moves), opposite_player(player_id));
+            if (moves.size() == 0) {
+                int ret = 1;
+                memcpy(old_game_state, game_state, sizeof(GameState));
+                return ret;
+            }
 
             int min = INT_MAX;
             for (Move move : moves) {
-                int score = maxi(move, depth - 1, player_id);
+                int score = maxi(move, alpha, beta, depth - 1, player_id);
                 if (score < min) {
                     min = score;
                 }
@@ -187,7 +206,7 @@ namespace stix {
             return min;
         }
 
-        int maxi(Move move, unsigned int depth, PlayerID player_id = PLAYER_NONE) {
+        int maxi(Move move, int alpha, int beta, unsigned int depth, PlayerID player_id = PLAYER_NONE) {
             if (player_id == PLAYER_NONE) {
                 player_id = this->player_id;
             }
@@ -195,17 +214,24 @@ namespace stix {
             GameState old_game_state;
             memcpy(old_game_state, game_state, sizeof(GameState));
             this->move(move);
-            
+
             if (depth == 0) {
-                return evaluate(player_id);
+                int ret = evaluate(player_id);
+                memcpy(old_game_state, game_state, sizeof(GameState));
+                return ret;
             }
 
             std::vector<Move> moves;
             find_all_moves(std::back_inserter(moves), player_id);
+            if (moves.size() == 0) {
+                int ret = -1;
+                memcpy(old_game_state, game_state, sizeof(GameState));
+                return ret;
+            }
 
             int max = INT_MIN;
             for (Move move : moves) {
-                int score = mini(move, depth - 1, player_id);
+                int score = mini(move, alpha, beta, depth - 1, player_id);
                 if (score > max) {
                     max = score;
                 }
@@ -227,7 +253,7 @@ namespace stix {
             int best_move_score = INT_MIN;
 
             for (Move move : moves) {
-                int score = mini(move, depth - 1, player_id);
+                int score = mini(move, INT_MIN, INT_MAX, depth - 1, player_id);
                 if (score > best_move_score) {
                     best_move = move;
                     best_move_score = score;
@@ -237,4 +263,4 @@ namespace stix {
             return best_move;
         }
     };
-}
+} // namespace stix
