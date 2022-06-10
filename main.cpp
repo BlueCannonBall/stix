@@ -82,7 +82,6 @@ int main() {
             }
         }
 
-    forfeit_move:
         std::cout << "Computer's turn" << std::endl;
         stix::BestMove computer_move = game.find_best_move(std::chrono::seconds(2));
         game.move(computer_move);
